@@ -1,0 +1,19 @@
+{
+  "name": "secret-chat",
+  "version": "1.0.0",
+  "description": "一个具有仿黑客/暗网风格的加密聊天应用",
+  "main": "serve.js",
+  "scripts": {
+    "start": "node serve.js",
+    "dev": "node serve.js"
+  },
+  "keywords": [
+    "chat",
+    "secure",
+    "firebase",
+    "hacker-style"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {}
+} 

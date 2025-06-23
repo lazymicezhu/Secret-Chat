@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Chat | 暗网聊天</title>
+    <link rel="stylesheet" href="src/css/style.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- 登录界面 -->
+        <div id="auth-container" class="container">
+            <div class="terminal-header">
+                <span class="terminal-title">SECRET_CHAT v1.0</span>
+                <div class="terminal-controls">
+                    <span class="control"></span>
+                    <span class="control"></span>
+                    <span class="control"></span>
+                </div>
+            </div>
+            
+            <div class="terminal-body" id="auth-screen">
+                <div class="ascii-art">
+                    <pre>
+     _____                      _    _____ _           _   
+    / ____|                    | |  / ____| |         | |  
+   | (___   ___  ___ _ __ ___  | | | |    | |__   __ _| |_ 
+    \___ \ / _ \/ __| '__/ _ \ | | | |    | '_ \ / _` | __|
+    ____) |  __/ (__| | |  __/ | | | |____| | | | (_| | |_ 
+   |_____/ \___|\___|_|  \___| |_|  \_____|_| |_|\__,_|\__|
+                                                           
+    </pre>
+                </div>
+                
+                <div class="login-options">
+                    <button id="btn-existing-key" class="hacker-btn">[1] 使用已有聊天密钥</button>
+                    <button id="btn-create-key" class="hacker-btn">[2] 创建新的聊天密钥</button>
+                </div>
+                
+                <!-- 使用已有密钥登录 -->
+                <div id="login-existing" class="auth-form hidden">
+                    <h3>&gt; 使用已有密钥登录系统</h3>
+                    <div class="form-group">
+                        <label for="input-key">聊天密钥:</label>
+                        <input type="text" id="input-key" class="terminal-input" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="input-password">密码:</label>
+                        <input type="password" id="input-password" class="terminal-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="input-otp">OTP验证 <span id="otp-coordinate"></span>:</label>
+                        <input type="text" id="input-otp" class="terminal-input" autocomplete="off">
+                    </div>
+                    <button id="btn-login" class="hacker-btn">登录系统</button>
+                    <button id="btn-back-to-options" class="hacker-btn secondary">返回</button>
+                </div>
+                
+                <!-- 创建新密钥 -->
+                <div id="create-key" class="auth-form hidden">
+                    <h3>&gt; 创建新的聊天密钥</h3>
+                    <p class="terminal-text">请输入4组三位数字作为种子值:</p>
+                    <div class="seed-inputs">
+                        <input type="text" class="terminal-input seed-input" maxlength="3" data-index="0" autocomplete="off">
+                        <input type="text" class="terminal-input seed-input" maxlength="3" data-index="1" autocomplete="off">
+                        <input type="text" class="terminal-input seed-input" maxlength="3" data-index="2" autocomplete="off">
+                        <input type="text" class="terminal-input seed-input" maxlength="3" data-index="3" autocomplete="off">
+                    </div>
+                    
+                    <div id="key-generation-result" class="hidden">
+                        <h3>&gt; 生成的聊天密钥</h3>
+                        <div class="key-display">
+                            <span id="generated-key"></span>
+                        </div>
+                        <p class="warning-text">警告: 请务必保存此密钥，它无法被找回!</p>
+                        
+                        <div class="form-group">
+                            <label for="register-username">设置用户名:</label>
+                            <input type="text" id="register-username" class="terminal-input" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">设置密码:</label>
+                            <input type="password" id="register-password" class="terminal-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password-confirm">确认密码:</label>
+                            <input type="password" id="register-password-confirm" class="terminal-input">
+                        </div>
+                        
+                        <button id="btn-register" class="hacker-btn">保存并生成OTP卡</button>
+                    </div>
+                    
+                    <button id="btn-generate-key" class="hacker-btn">生成密钥</button>
+                    <button id="btn-back-from-create" class="hacker-btn secondary">返回</button>
+                </div>
+                
+                <!-- OTP卡显示 -->
+                <div id="otp-card-display" class="hidden">
+                    <h3>&gt; 您的OTP验证卡</h3>
+                    <p class="terminal-text">当登录时系统会随机要求提供卡片上指定位置的验证码</p>
+                    <div id="otp-card"></div>
+                    <p class="warning-text">警告: 请立即保存此OTP卡，它只会显示一次!</p>
+                    <button id="btn-save-otp" class="hacker-btn">我已保存OTP卡</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 聊天界面 -->
+        <div id="chat-container" class="container hidden">
+            <div class="terminal-header">
+                <span class="terminal-title">SECRET_CHAT v1.0 - <span id="username-display"></span></span>
+                <div class="terminal-controls">
+                    <span class="control"></span>
+                    <span class="control"></span>
+                    <span class="control"></span>
+                </div>
+            </div>
+            
+            <div class="terminal-body">
+                <div class="chat-layout">
+                    <div class="online-users-panel">
+                        <h3>&gt; 在线用户</h3>
+                        <div id="online-users-list"></div>
+                        <div class="search-user">
+                            <input type="text" id="search-username" class="terminal-input" placeholder="搜索用户名">
+                            <button id="btn-search-user" class="hacker-btn small">搜索</button>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-panel">
+                        <div id="chat-header">
+                            <h3>&gt; 聊天窗口 - <span id="chat-with"></span></h3>
+                        </div>
+                        <div id="messages" class="messages-container"></div>
+                        <div class="message-input-container">
+                            <input type="text" id="message-input" class="terminal-input" placeholder="输入消息...">
+                            <button id="btn-send-message" class="hacker-btn">发送</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 系统通知 -->
+    <div id="notification" class="notification hidden"></div>
+
+    <!-- JavaScript 文件 -->
+    <script src="src/js/config.js"></script>
+    <script src="src/js/auth.js"></script>
+    <script src="src/js/chat.js"></script>
+    <script src="src/js/app.js"></script>
+</body>
+</html> 

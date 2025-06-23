@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员后台 | Secret Chat</title>
+    <link rel="stylesheet" href="src/css/style.css">
+    <link rel="stylesheet" href="src/css/admin.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- 管理员登录界面 -->
+        <div id="admin-login-container" class="container">
+            <div class="terminal-header">
+                <span class="terminal-title">ADMIN_CONSOLE v1.0</span>
+                <div class="terminal-controls">
+                    <span class="control"></span>
+                    <span class="control"></span>
+                    <span class="control"></span>
+                </div>
+            </div>
+            
+            <div class="terminal-body">
+                <div class="ascii-art">
+                    <pre>
+     _____                      _    _____ _           _       _____  __  __ _____ _   _ 
+    / ____|                    | |  / ____| |         | |     |  __ \|  \/  |_   _| \ | |
+   | (___   ___  ___ _ __ ___  | | | |    | |__   __ _| |_    | |  | | \  / | | | |  \| |
+    \___ \ / _ \/ __| '__/ _ \ | | | |    | '_ \ / _` | __|   | |  | | |\/| | | | | . ` |
+    ____) |  __/ (__| | |  __/ | | | |____| | | | (_| | |_    | |__| | |  | |_| |_| |\  |
+   |_____/ \___|\___|_|  \___| |_|  \_____|_| |_|\__,_|\__|   |_____/|_|  |_|_____|_| \_|                                                            
+    </pre>
+                </div>
+                
+                <div class="admin-login-form">
+                    <h3>&gt; 管理员登录</h3>
+                    <div class="form-group">
+                        <label for="admin-username">管理员账号:</label>
+                        <input type="text" id="admin-username" class="terminal-input" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-password">密码:</label>
+                        <input type="password" id="admin-password" class="terminal-input">
+                    </div>
+                    <button id="admin-login-btn" class="hacker-btn">登录系统</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 管理员后台界面 -->
+        <div id="admin-panel-container" class="container hidden">
+            <div class="terminal-header">
+                <span class="terminal-title">ADMIN_CONSOLE v1.0 - 控制面板</span>
+                <div class="terminal-controls">
+                    <span class="control"></span>
+                    <span class="control"></span>
+                    <span class="control"></span>
+                </div>
+            </div>
+            
+            <div class="terminal-body">
+                <div class="admin-header">
+                    <h3>&gt; 系统状态监控</h3>
+                    <div class="admin-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">注册用户:</div>
+                            <div id="total-users" class="stat-value">加载中...</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">在线用户:</div>
+                            <div id="online-users-count" class="stat-value">加载中...</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">消息总量:</div>
+                            <div id="total-messages" class="stat-value">加载中...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="admin-tabs">
+                    <button id="tab-users" class="tab-btn active">用户管理</button>
+                    <button id="tab-messages" class="tab-btn">消息记录</button>
+                    <button id="tab-chat" class="tab-btn">用户聊天</button>
+                    <button id="admin-logout-btn" class="hacker-btn danger">退出后台</button>
+                </div>
+                
+                <!-- 用户管理面板 -->
+                <div id="panel-users" class="admin-panel-content">
+                    <div class="search-bar">
+                        <input type="text" id="search-users" class="terminal-input" placeholder="搜索用户...">
+                    </div>
+                    <div class="users-list">
+                        <table id="users-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>用户名</th>
+                                    <th>聊天密钥</th>
+                                    <th>状态</th>
+                                    <th>注册时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-tbody">
+                                <!-- 用户数据会动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 消息记录面板 -->
+                <div id="panel-messages" class="admin-panel-content hidden">
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label>用户筛选:</label>
+                            <select id="filter-user" class="terminal-input">
+                                <option value="">全部用户</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>日期范围:</label>
+                            <input type="date" id="filter-date-start" class="terminal-input">
+                            <span>至</span>
+                            <input type="date" id="filter-date-end" class="terminal-input">
+                        </div>
+                        <button id="apply-filters" class="hacker-btn small">应用筛选</button>
+                    </div>
+                    <div class="messages-list">
+                        <table id="messages-table">
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>发送方</th>
+                                    <th>接收方</th>
+                                    <th>内容</th>
+                                </tr>
+                            </thead>
+                            <tbody id="messages-tbody">
+                                <!-- 消息数据会动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 用户聊天面板 -->
+                <div id="panel-chat" class="admin-panel-content hidden">
+                    <div class="admin-chat-layout">
+                        <div class="admin-users-list">
+                            <div class="admin-users-header">
+                                <h4>用户列表</h4>
+                                <input type="text" id="admin-search-user" class="terminal-input" placeholder="搜索用户...">
+                            </div>
+                            <div id="admin-users" class="users-list-container"></div>
+                        </div>
+                        <div class="admin-chat-container">
+                            <div id="admin-chat-header" class="chat-header">
+                                <h4>选择用户开始聊天</h4>
+                            </div>
+                            <div id="admin-messages" class="messages-container"></div>
+                            <div class="message-input-container">
+                                <input type="text" id="admin-message-input" class="terminal-input" placeholder="输入消息..." disabled>
+                                <button id="admin-send-message" class="hacker-btn small" disabled>发送</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 系统通知 -->
+    <div id="notification" class="notification hidden"></div>
+
+    <!-- JavaScript 文件 -->
+    <script src="src/js/config.js"></script>
+    <script src="src/js/admin.js"></script>
+</body>
+</html> 

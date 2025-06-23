@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 允许所有用户读写
+    match /{document=**} {
+      allow read, write: if true;
+    }
+
+    // 用户集合规则
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // 聊天集合规则
+    match /chats/{chatId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // 消息集合规则
+    match /messages/{messageId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // OTP卡集合规则
+    match /otp_cards/{userId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // 管理员消息集合规则
+    match /admin_messages/{messageId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // 好友关系集合规则
+    match /friends/{friendId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+} 
