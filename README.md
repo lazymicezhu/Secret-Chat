@@ -1,6 +1,7 @@
 # 秘密聊天应用 (Secret Chat)
 
 一个具有仿黑客/暗网风格的加密聊天应用，采用多重身份验证机制。
+演示站：https://lazymicezhu.github.io/Secret-Chat/
 
 ## 功能特点
 
